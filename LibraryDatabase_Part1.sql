@@ -263,6 +263,10 @@ BEGIN
 END
 GO
 
+--no replacement cost greater than 29.99
+ALTER TABLE LibraryProject.Assets
+	ADD CONSTRAINT CHK_Price CHECK (ReplacementCost<=29.99);
+
 
 
 /*
