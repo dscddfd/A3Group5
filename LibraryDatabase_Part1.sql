@@ -423,7 +423,7 @@ EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' 
 											
 --Ryan's Code
 											
-CREATE VIEW [feetable] AS
+CREATE VIEW feetable AS
 SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'Fee'
 FROM
 	libraryProject.AssetLoans al
@@ -434,17 +434,21 @@ WHERE DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE()) > 0;
 
 
 CREATE VIEW vt AS
-SELECT a.asset, f.paid AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
 FROM 
 	LibraryProject.Users u INNER JOIN LibraryProject.AssetLoans al 
-		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Users u1 
-		ON u.ResponsibleUserKey = u1.userkey INNER JOIN [LibraryProject].Assets a
+		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Assets a
 		ON al.assetkey = a.assetkey INNER JOIN [LibraryProject].Fees f
 		ON u.userkey = f.userkey
 WHERE a.AssetTypeKey = 2;
 
---DROP VIEW feetable;
---DROP VIEW vt;
+/*SELECT *
+FROM feetable
+SELECT *
+FROM vt
+DROP VIEW feetable;
+DROP VIEW vt;*/
+
 
 --End Ryan's Code											
 											
