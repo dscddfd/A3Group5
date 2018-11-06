@@ -266,7 +266,37 @@ GO
 --no replacement cost greater than 29.99
 ALTER TABLE LibraryProject.Assets
 	ADD CONSTRAINT CHK_Price CHECK (ReplacementCost<=29.99);
+--new assettype
+INSERT LibraryProject.AssetTypes (AssetType)
+VALUES ('Magzine');
 
+--new assets
+INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, ReplacementCost, Restricted)
+VALUES
+	('Playboy 12/2011', 'Magzine for Men', 3, 9.99, 1),
+	('Playboy 11/2011', 'Magzine for Men', 3, 9.99, 1),
+	('Venom', 'Spiderman VS Venom', 1, 24.99, 0),
+	('GQ 8/2016', 'Fashion Magzine For Men', 3, 15.99, 0),
+	('Pitch Perfect', 'Dance, Comedy, Anna Kendrick', 1, 9.99, 0),
+	('Magic Mike', 'Story of Male Strippers', 1, 9.99, 1),
+	('La La Land', 'What happens in LA...', 1, 12.99, 0),
+	('Zootopia', 'A bunny as a cop in the animal world', 1, 10.99, 0),
+	('A Brife History Of Time', 'A brife introduction of quantum physics', 2, 15.99, 0),
+	('Titanic', 'Oscar winning romantic movie', 1, 9.99, 1)
+
+--new users and cards
+INSERT LibraryProject.Users(LastName, FirstName, Email, Address1, Address2, City, StateAbbreviation, Birthdate, ResponsibleUserKey)
+VALUES
+	('Tyler', 'Wood', 'Twood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '12/24/1969', NULL),
+	('Ashton', 'Wood', 'Ashwood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '11/12/2000', 1),
+	('Kris', 'Wood', 'Kwood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '11/12/2011', 1)
+
+INSERT LibraryProject.Cards (CardNumber, UserKey, CardTypeKey)
+VALUES
+	('T2221-422-3181', 7, 1),
+	('T1241-233-2934', 8, 2),
+	('C1266-553-9901', 9, 3)
+	
 
 
 /*
