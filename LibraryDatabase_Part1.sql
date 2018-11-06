@@ -267,29 +267,50 @@ GO
 ALTER TABLE LibraryProject.Assets
 	ADD CONSTRAINT CHK_Price CHECK (ReplacementCost<=29.99);
 --new assettype
+CREATE PROCEDURE AType @atype varchar(20)
+AS 
+BEGIN
 INSERT LibraryProject.AssetTypes (AssetType)
-VALUES ('Magzine');
+VALUES (@atype)
+END;
+
+EXEC AType @atype='Magzine';
 
 --new assets
+CREATE PROCEDURE Assets @Asset varchar(100), @AssetDescription varchar(max), @AssetTypeKey int, @ReplacementCost money, @Restricted bit
+AS
+BEGIN
+
 INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, ReplacementCost, Restricted)
 VALUES
-	('Playboy 12/2011', 'Magzine for Men', 3, 9.99, 1),
-	('Playboy 11/2011', 'Magzine for Men', 3, 9.99, 1),
-	('Venom', 'Spiderman VS Venom', 1, 24.99, 0),
-	('GQ 8/2016', 'Fashion Magzine For Men', 3, 15.99, 0),
-	('Pitch Perfect', 'Dance, Comedy, Anna Kendrick', 1, 9.99, 0),
-	('Magic Mike', 'Story of Male Strippers', 1, 9.99, 1),
-	('La La Land', 'What happens in LA...', 1, 12.99, 0),
-	('Zootopia', 'A bunny as a cop in the animal world', 1, 10.99, 0),
-	('A Brife History Of Time', 'A brife introduction of quantum physics', 2, 15.99, 0),
-	('Titanic', 'Oscar winning romantic movie', 1, 9.99, 1)
+(@Asset, @AssetDescription , @AssetTypeKey, @ReplacementCost, @Restricted)
+END;
+
+EXEC Assets @Asset='Playboy 12/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Playboy 11/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Venom1', @AssetDescription= 'Spiderman VS Venom' , @AssetTypeKey=1, @ReplacementCost=24.99, @Restricted=0
+EXEC Assets @Asset='GQ 8/2016', @AssetDescription= 'Fashion Magzine For Menn' , @AssetTypeKey=3, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Pitch Perfect1', @AssetDescription= 'Dance, Comedy, Anna Kendrick' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=0
+EXEC Assets @Asset='Magic Mike', @AssetDescription= 'Story of Male Strippers' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='La La Land', @AssetDescription= 'What happens in LA...' , @AssetTypeKey=1, @ReplacementCost=12.99, @Restricted=0
+EXEC Assets @Asset='Zootopia', @AssetDescription= 'A bunny as a cop in the animal world' , @AssetTypeKey=1, @ReplacementCost=10.99, @Restricted=0
+EXEC Assets @Asset='A Brife History Of Time', @AssetDescription= 'A brife introduction of quantum physics' , @AssetTypeKey=2, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=1
+
 
 --new users and cards
+CREATE PROCEDURE UsersInsert @LastName varchar(40), @FirstName varchar(40), @Email varchar(40), @Address1 varchar(40), @Address2 varchar(40), @City varchar(40), @StateAbbreviation varchar(40), @Birthdate date, @ResponsibleUserKey int
+AS
+BEGIN
 INSERT LibraryProject.Users(LastName, FirstName, Email, Address1, Address2, City, StateAbbreviation, Birthdate, ResponsibleUserKey)
 VALUES
-	('Tyler', 'Wood', 'Twood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '12/24/1969', NULL),
-	('Ashton', 'Wood', 'Ashwood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '11/12/2000', 1),
-	('Kris', 'Wood', 'Kwood@yahoo.com', '1100 West 2290 North', NULL, 'Layton', 'UT', '11/12/2011', 1)
+	(@LastName, @FirstName, @Email, @Address1, @Address2, @City, @StateAbbreviation, @Birthdate, @ResponsibleUserKey)
+END
+
+EXEC UsersInsert @LastName='Tyler', @FirstName='Wood', @Email='Twood@yahoo.com', @Address1='1100 West 2290 North', @Address2=NULL, @City='Layton', @StateAbbreviation='UT', @Birthdate='12/24/1969', @ResponsibleUserKey=NULL
+EXEC UsersInsert @LastName='Ashton', @FirstName='Wood', @Email='Ashwood@yahoo.com', @Address1='1100 West 2290 North', @Address2=NULL, @City='Layton', @StateAbbreviation='UT', @Birthdate='11/12/2000', @ResponsibleUserKey=1
+EXEC UsersInsert @LastName='Kris', @FirstName='Wood', @Email='Kwood@yahoo.com', @Address1='1100 West 2290 North', @Address2=NULL, @City='Layton', @StateAbbreviation='UT', @Birthdate='11/12/2011', @ResponsibleUserKey=1
+
 
 INSERT LibraryProject.Cards (CardNumber, UserKey, CardTypeKey)
 VALUES
