@@ -7,12 +7,12 @@
 -- 2) Create a trigger that verifies that the limit rules on the number of check outs is adhered to (see rules below).
 
 -- RULES ON CHECKOUT:
--- •	Restricted items can only be checked out by members with an adult card
--- •	Check out limits for each card type – i.e. the maximum number of items out at any given time
---			o	Adult cards – maximum of 6
---		    o	Teen cards – maximum of 4
---          o	Children cards – maximum of 2
--- •	An asset cannot be checked out if it is already checked out
+-- â€¢	Restricted items can only be checked out by members with an adult card
+-- â€¢	Check out limits for each card type â€“ i.e. the maximum number of items out at any given time
+--			o	Adult cards â€“ maximum of 6
+--		    o	Teen cards â€“ maximum of 4
+--          o	Children cards â€“ maximum of 2
+-- â€¢	An asset cannot be checked out if it is already checked out
 
 
 CREATE OR ALTER FUNCTION [LibraryProject].doesAssetExist(@thisAssetKey int)
@@ -137,9 +137,9 @@ CREATE OR ALTER FUNCTION [LibraryProject].passLimitTest(@thisUserKey int)
 RETURNS INT
 AS
 BEGIN
-	--Adult cards – maximum of 6
-	--Teen cards – maximum of 4
-	--Children cards – maximum of 2
+	--Adult cards â€“ maximum of 6
+	--Teen cards â€“ maximum of 4
+	--Children cards â€“ maximum of 2
 
 	-- does user have card?
 	IF EXISTS(SELECT CardKey FROM [LibraryProject].Cards WHERE UserKey = @thisUserKey AND DeactivatedOn IS NULL)
@@ -268,14 +268,6 @@ GO
 ALTER TABLE LibraryProject.Assets
 	ADD CONSTRAINT CHK_Price CHECK (ReplacementCost<=29.99);
 --new assettype
-CREATE PROCEDURE AType @atype varchar(20)
-AS 
-BEGIN
-INSERT LibraryProject.AssetTypes (AssetType)
-VALUES (@atype)
-END;
-
-EXEC AType @atype='Magzine';
 
 --new assets
 CREATE PROCEDURE Assets @Asset varchar(100), @AssetDescription varchar(max), @AssetTypeKey int, @ReplacementCost money, @Restricted bit
@@ -286,18 +278,6 @@ INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, Replacement
 VALUES
 (@Asset, @AssetDescription , @AssetTypeKey, @ReplacementCost, @Restricted)
 END;
-
-EXEC Assets @Asset='Playboy 12/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='Playboy 11/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='Venom1', @AssetDescription= 'Spiderman VS Venom' , @AssetTypeKey=1, @ReplacementCost=24.99, @Restricted=0
-EXEC Assets @Asset='GQ 8/2016', @AssetDescription= 'Fashion Magzine For Menn' , @AssetTypeKey=3, @ReplacementCost=15.99, @Restricted=0
-EXEC Assets @Asset='Pitch Perfect1', @AssetDescription= 'Dance, Comedy, Anna Kendrick' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=0
-EXEC Assets @Asset='Magic Mike', @AssetDescription= 'Story of Male Strippers' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='La La Land', @AssetDescription= 'What happens in LA...' , @AssetTypeKey=1, @ReplacementCost=12.99, @Restricted=0
-EXEC Assets @Asset='Zootopia', @AssetDescription= 'A bunny as a cop in the animal world' , @AssetTypeKey=1, @ReplacementCost=10.99, @Restricted=0
-EXEC Assets @Asset='A Brife History Of Time', @AssetDescription= 'A brife introduction of quantum physics' , @AssetTypeKey=2, @ReplacementCost=15.99, @Restricted=0
-EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=1
-
 
 --new users and cards
 CREATE PROCEDURE UsersInsert @LastName varchar(40), @FirstName varchar(40), @Email varchar(40), @Address1 varchar(40), @Address2 varchar(40), @City varchar(40), @StateAbbreviation varchar(40), @Birthdate date, @ResponsibleUserKey int
@@ -374,6 +354,7 @@ RETURNS MONEY
 		FROM LibraryProject.Assets A
 		WHERE A.AssetKey = @AssetKey
 		IF (@AssetTypeKey = 1)
+<<<<<<< HEAD
 		Begin
 			SET @AllInCost = @AllInCost + .99;
 		END
@@ -385,6 +366,13 @@ RETURNS MONEY
 		BEGIN
 			SET @AllInCost = @AllInCost + 1.49;
 		END
+=======
+			SET @AllInCost = @AllInCost + .99; -- Books
+		ELSE IF (@AssetTypeKey = 2)
+			SET @AllInCost = @AllInCost + 1.99; -- DVDs
+		ELSE IF (@AssetTypeKey = 3)
+			SET @AllInCost = @AllInCost + 1.49; --CDs
+>>>>>>> 4b3615879bc671ea8192bc9d25a50cc38c559255
 	RETURN @AllInCost
 	END
 ;
@@ -404,36 +392,6 @@ BEGIN
 		BEGIN
 			INSERT LibraryProject.AssetTypes (AssetType)
 			VALUES (@AssetType)
-		END
-END;
-
-CREATE OR ALTER PROCEDURE InsertAssets
-	@Name VarChar(100), 
-	@Description VarChar(MAX),
-	@TypeKey INT,
-	@ReplacementCost money,
-	@Restricted bit = 0
-AS
-BEGIN
-	DECLARE @Exists int = 0
-	SELECT 
-		@Exists = COUNT(A.AssetKey)
-	FROM 
-		LibraryProject.Assets A
-	WHERE 
-		A.Asset = @Name 
-		AND
-		A.AssetDescription = @Description 
-		AND
-		A.AssetTypeKey = @TypeKey
-		AND
-		A.ReplacementCost = @ReplacementCost
-		AND
-		A.Restricted = @Restricted
-	IF (@Exists = 0)
-		BEGIN
-			INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, ReplacementCost, Restricted)
-			VALUES (@Name, @Description, @TypeKey, @ReplacementCost, @Restricted)
 		END
 END;
 
@@ -463,22 +421,21 @@ BEGIN
 END;
 
 
-/*
-EXEC InsertAssetType CD
-EXEC InsertAssets 'Book 1', 'A book about books', 1, 15.99, 0
-EXEC InsertAssets 'Book 2', 'A book about books about books', 1, 12.99, 0
-EXEC InsertAssets 'Book 3', 'A book about books about books about books', 1, 10.99, 1
-EXEC InsertAssets 'DVD 1', 'A DVD about DVDs', 2, 15.90, 0
-EXEC InsertAssets 'DVD 2', 'A DVD about DVDs about DVDs', 2, 12.90, 0
-EXEC InsertAssets 'DVD 3', 'A DVD about DVDs about DVDs about DVDs', 2, 10.90, 1
-EXEC InsertAssets 'CD 1', 'A CD about CDs', 3, 16.99, 0
-EXEC InsertAssets 'CD 2', 'A CD about CDs about CDs', 3, 13.99, 0
-EXEC InsertAssets 'CD 3', 'A CD about CDs about CDs about CDs', 3, 11.99, 0
-EXEC InsertAssets 'CD 4', 'A normal CD', 3, 3.99, 0
-*/
+EXEC InserInsertAssetType 'Magazine';
+EXEC Assets @Asset='Playboy 12/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Playboy 11/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Venom1', @AssetDescription= 'Spiderman VS Venom' , @AssetTypeKey=1, @ReplacementCost=24.99, @Restricted=0
+EXEC Assets @Asset='GQ 8/2016', @AssetDescription= 'Fashion Magzine For Menn' , @AssetTypeKey=3, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Pitch Perfect1', @AssetDescription= 'Dance, Comedy, Anna Kendrick' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=0
+EXEC Assets @Asset='Magic Mike', @AssetDescription= 'Story of Male Strippers' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='La La Land', @AssetDescription= 'What happens in LA...' , @AssetTypeKey=1, @ReplacementCost=12.99, @Restricted=0
+EXEC Assets @Asset='Zootopia', @AssetDescription= 'A bunny as a cop in the animal world' , @AssetTypeKey=1, @ReplacementCost=10.99, @Restricted=0
+EXEC Assets @Asset='A Brife History Of Time', @AssetDescription= 'A brife introduction of quantum physics' , @AssetTypeKey=2, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=1
 
 
 --End Logan's Code
+<<<<<<< HEAD
 
 
 
@@ -553,3 +510,39 @@ EXECUTE CheckInAsset @thisAssetLoanKey = 6, @returnedOn = NULL, @lostOn = '11/01
 SELECT * FROM [LibraryProject].Fees
 */
 
+=======
+											
+--Ryan's Code
+											
+CREATE VIEW feetable AS
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'Fee'
+FROM
+	libraryProject.AssetLoans al
+		INNER JOIN [LibraryProject].Fees f
+		ON al.userkey = f.userkey INNER JOIN LibraryProject.assets a 
+		ON a.assetkey = al.assetkey
+WHERE DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE()) > 0;
+
+
+CREATE VIEW vt AS
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
+FROM 
+	LibraryProject.Users u INNER JOIN LibraryProject.AssetLoans al 
+		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Assets a
+		ON al.assetkey = a.assetkey INNER JOIN [LibraryProject].Fees f
+		ON u.userkey = f.userkey
+WHERE a.AssetTypeKey = 2;
+
+/*SELECT *
+FROM feetable
+SELECT *
+FROM vt
+DROP VIEW feetable;
+DROP VIEW vt;*/
+
+
+--End Ryan's Code											
+											
+											
+											
+>>>>>>> 4b3615879bc671ea8192bc9d25a50cc38c559255
