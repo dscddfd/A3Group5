@@ -446,6 +446,15 @@ BEGIN
 	DELETE FROM LibraryProject.Assets WHERE AssetKey = @AssetKey;
 END;
 
+CREATE OR ALTER PROCEDURE PayFees
+	@FeeId int
+AS
+BEGIN
+	UPDATE LibraryProject.Fees
+	SET Paid = 1
+	WHERE FeeKey = @FeeId
+END;
+
 
 /*
 EXEC InsertAssetType CD
