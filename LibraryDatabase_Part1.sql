@@ -338,3 +338,128 @@ GO
 
 
 */
+
+
+
+
+--Logan's Code
+CREATE OR ALTER FUNCTION LibraryProject.FlatFee   
+(   @DaysLate INT = 0  )  
+RETURNS MONEY  
+    BEGIN   
+		DECLARE @MoneyDue MONEY
+        IF (@DaysLate < 4)
+			SET @MoneyDue = 0;
+		ELSE IF (@DaysLate < 8)
+			SET @MoneyDue = 1.00;
+		ELSE IF (@DaysLate < 15)
+			SET @MoneyDue = 2.00;
+		ELSE
+			SET @MoneyDue = 3.00;
+        RETURN @MoneyDue 
+    END  
+; 
+
+CREATE OR ALTER FUNCTION LibraryProject.AllInCost
+( @AssetKey INT)
+RETURNS MONEY
+	BEGIN
+		DECLARE @AllInCost INT
+		SELECT @AllInCost = A.ReplacementCost
+		FROM LibraryProject.Asset A
+		WHERE A.AssetKey = @AssetKey
+		DECLARE @AssetTypeKey INT
+		SELECT @AssetTypeKey = A.AssetTypeKey
+		FROM LibraryProject.Asset A
+		WHERE A.AssetKey = @AssetKey
+		IF (@AssetTypeKey = 1)
+			SET @AllInCost = @AllInCost + .99;
+		ELSE IF (@AssetTypeKey = 2)
+			SET @AllInCost = @AllInCost + 1.99;
+		ELSE IF (@AssetTypeKey = 3)
+			SET @AllInCost = @AllInCost + 1.49;
+	RETURN @AllInCost
+	END
+;
+
+CREATE OR ALTER PROCEDURE InsertAssetType
+	@AssetType varChar(50)
+AS
+BEGIN
+	DECLARE @Exists int = 0
+	SELECT 
+		@Exists = COUNT(A.AssetTypeKey)
+	FROM 
+		LibraryProject.AssetTypes A
+	WHERE 
+		A.AssetType = @AssetType
+	IF (@Exists = 0)
+		BEGIN
+			INSERT LibraryProject.AssetTypes (AssetType)
+			VALUES (@AssetType)
+		END
+END;
+
+CREATE OR ALTER PROCEDURE InsertAssets
+	@Name VarChar(100), 
+	@Description VarChar(MAX),
+	@TypeKey INT,
+	@ReplacementCost money,
+	@Restricted bit = 0
+AS
+BEGIN
+	DECLARE @Exists int = 0
+	SELECT 
+		@Exists = COUNT(A.AssetKey)
+	FROM 
+		LibraryProject.Assets A
+	WHERE 
+		A.Asset = @Name 
+		AND
+		A.AssetDescription = @Description 
+		AND
+		A.AssetTypeKey = @TypeKey
+		AND
+		A.ReplacementCost = @ReplacementCost
+		AND
+		A.Restricted = @Restricted
+	IF (@Exists = 0)
+		BEGIN
+			INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, ReplacementCost, Restricted)
+			VALUES (@Name, @Description, @TypeKey, @ReplacementCost, @Restricted)
+		END
+END;
+
+CREATE OR ALTER PROCEDURE DeactivateAsset
+	@AssetKey int
+AS
+BEGIN
+	UPDATE LibraryProject.Assets
+	SET DeactivatedOn = GETDATE()
+	WHERE AssetKey = @AssetKey
+END;
+
+CREATE OR ALTER PROCEDURE DeleteAsset
+	@AssetKey int
+AS
+BEGIN
+	DELETE FROM LibraryProject.Assets WHERE AssetKey = @AssetKey;
+END;
+
+
+/*
+EXEC InsertAssetType CD
+EXEC InsertAssets 'Book 1', 'A book about books', 1, 15.99, 0
+EXEC InsertAssets 'Book 2', 'A book about books about books', 1, 12.99, 0
+EXEC InsertAssets 'Book 3', 'A book about books about books about books', 1, 10.99, 1
+EXEC InsertAssets 'DVD 1', 'A DVD about DVDs', 2, 15.90, 0
+EXEC InsertAssets 'DVD 2', 'A DVD about DVDs about DVDs', 2, 12.90, 0
+EXEC InsertAssets 'DVD 3', 'A DVD about DVDs about DVDs about DVDs', 2, 10.90, 1
+EXEC InsertAssets 'CD 1', 'A CD about CDs', 3, 16.99, 0
+EXEC InsertAssets 'CD 2', 'A CD about CDs about CDs', 3, 13.99, 0
+EXEC InsertAssets 'CD 3', 'A CD about CDs about CDs about CDs', 3, 11.99, 0
+EXEC InsertAssets 'CD 4', 'A normal CD', 3, 3.99, 0
+*/
+
+
+--End Logan's Code
