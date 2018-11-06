@@ -6,12 +6,12 @@
 --	2) Create a trigger that verifies that the limit rules on the number of check outs is adhered to (see rules below).
 
 -- RULES ON CHECKOUT:
--- •	Restricted items can only be checked out by members with an adult card
--- •	Check out limits for each card type – i.e. the maximum number of items out at any given time
---			o	Adult cards – maximum of 6
---		    o	Teen cards – maximum of 4
---          o	Children cards – maximum of 2
--- •	An asset cannot be checked out if it is already checked out
+-- â€¢	Restricted items can only be checked out by members with an adult card
+-- â€¢	Check out limits for each card type â€“ i.e. the maximum number of items out at any given time
+--			o	Adult cards â€“ maximum of 6
+--		    o	Teen cards â€“ maximum of 4
+--          o	Children cards â€“ maximum of 2
+-- â€¢	An asset cannot be checked out if it is already checked out
 
 
 CREATE OR ALTER FUNCTION [LibraryProject].doesAssetExist(@thisAssetKey int)
@@ -136,9 +136,9 @@ CREATE OR ALTER FUNCTION [LibraryProject].passLimitTest(@thisUserKey int)
 RETURNS INT
 AS
 BEGIN
-	--Adult cards – maximum of 6
-	--Teen cards – maximum of 4
-	--Children cards – maximum of 2
+	--Adult cards â€“ maximum of 6
+	--Teen cards â€“ maximum of 4
+	--Children cards â€“ maximum of 2
 
 	-- does user have card?
 	IF EXISTS(SELECT CardKey FROM [LibraryProject].Cards WHERE UserKey = @thisUserKey AND DeactivatedOn IS NULL)
@@ -420,3 +420,33 @@ EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' 
 
 
 --End Logan's Code
+											
+--Ryan's Code
+											
+CREATE VIEW [feetable] AS
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'Fee'
+FROM
+	libraryProject.AssetLoans al
+		INNER JOIN [LibraryProject].Fees f
+		ON al.userkey = f.userkey INNER JOIN LibraryProject.assets a 
+		ON a.assetkey = al.assetkey
+WHERE DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE()) > 0;
+
+
+CREATE VIEW vt AS
+SELECT a.asset, f.paid AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
+FROM 
+	LibraryProject.Users u INNER JOIN LibraryProject.AssetLoans al 
+		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Users u1 
+		ON u.ResponsibleUserKey = u1.userkey INNER JOIN [LibraryProject].Assets a
+		ON al.assetkey = a.assetkey INNER JOIN [LibraryProject].Fees f
+		ON u.userkey = f.userkey
+WHERE a.AssetTypeKey = 2;
+
+--DROP VIEW feetable;
+--DROP VIEW vt;
+
+--End Ryan's Code											
+											
+											
+											
