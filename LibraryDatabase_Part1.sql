@@ -267,14 +267,6 @@ GO
 ALTER TABLE LibraryProject.Assets
 	ADD CONSTRAINT CHK_Price CHECK (ReplacementCost<=29.99);
 --new assettype
-CREATE PROCEDURE AType @atype varchar(20)
-AS 
-BEGIN
-INSERT LibraryProject.AssetTypes (AssetType)
-VALUES (@atype)
-END;
-
-EXEC AType @atype='Magzine';
 
 --new assets
 CREATE PROCEDURE Assets @Asset varchar(100), @AssetDescription varchar(max), @AssetTypeKey int, @ReplacementCost money, @Restricted bit
@@ -285,18 +277,6 @@ INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, Replacement
 VALUES
 (@Asset, @AssetDescription , @AssetTypeKey, @ReplacementCost, @Restricted)
 END;
-
-EXEC Assets @Asset='Playboy 12/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='Playboy 11/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='Venom1', @AssetDescription= 'Spiderman VS Venom' , @AssetTypeKey=1, @ReplacementCost=24.99, @Restricted=0
-EXEC Assets @Asset='GQ 8/2016', @AssetDescription= 'Fashion Magzine For Menn' , @AssetTypeKey=3, @ReplacementCost=15.99, @Restricted=0
-EXEC Assets @Asset='Pitch Perfect1', @AssetDescription= 'Dance, Comedy, Anna Kendrick' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=0
-EXEC Assets @Asset='Magic Mike', @AssetDescription= 'Story of Male Strippers' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
-EXEC Assets @Asset='La La Land', @AssetDescription= 'What happens in LA...' , @AssetTypeKey=1, @ReplacementCost=12.99, @Restricted=0
-EXEC Assets @Asset='Zootopia', @AssetDescription= 'A bunny as a cop in the animal world' , @AssetTypeKey=1, @ReplacementCost=10.99, @Restricted=0
-EXEC Assets @Asset='A Brife History Of Time', @AssetDescription= 'A brife introduction of quantum physics' , @AssetTypeKey=2, @ReplacementCost=15.99, @Restricted=0
-EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=1
-
 
 --new users and cards
 CREATE PROCEDURE UsersInsert @LastName varchar(40), @FirstName varchar(40), @Email varchar(40), @Address1 varchar(40), @Address2 varchar(40), @City varchar(40), @StateAbbreviation varchar(40), @Birthdate date, @ResponsibleUserKey int
@@ -373,11 +353,11 @@ RETURNS MONEY
 		FROM LibraryProject.Asset A
 		WHERE A.AssetKey = @AssetKey
 		IF (@AssetTypeKey = 1)
-			SET @AllInCost = @AllInCost + .99;
+			SET @AllInCost = @AllInCost + .99; -- Books
 		ELSE IF (@AssetTypeKey = 2)
-			SET @AllInCost = @AllInCost + 1.99;
+			SET @AllInCost = @AllInCost + 1.99; -- DVDs
 		ELSE IF (@AssetTypeKey = 3)
-			SET @AllInCost = @AllInCost + 1.49;
+			SET @AllInCost = @AllInCost + 1.49; --CDs
 	RETURN @AllInCost
 	END
 ;
@@ -397,36 +377,6 @@ BEGIN
 		BEGIN
 			INSERT LibraryProject.AssetTypes (AssetType)
 			VALUES (@AssetType)
-		END
-END;
-
-CREATE OR ALTER PROCEDURE InsertAssets
-	@Name VarChar(100), 
-	@Description VarChar(MAX),
-	@TypeKey INT,
-	@ReplacementCost money,
-	@Restricted bit = 0
-AS
-BEGIN
-	DECLARE @Exists int = 0
-	SELECT 
-		@Exists = COUNT(A.AssetKey)
-	FROM 
-		LibraryProject.Assets A
-	WHERE 
-		A.Asset = @Name 
-		AND
-		A.AssetDescription = @Description 
-		AND
-		A.AssetTypeKey = @TypeKey
-		AND
-		A.ReplacementCost = @ReplacementCost
-		AND
-		A.Restricted = @Restricted
-	IF (@Exists = 0)
-		BEGIN
-			INSERT LibraryProject.Assets (Asset, AssetDescription, AssetTypeKey, ReplacementCost, Restricted)
-			VALUES (@Name, @Description, @TypeKey, @ReplacementCost, @Restricted)
 		END
 END;
 
@@ -456,19 +406,17 @@ BEGIN
 END;
 
 
-/*
-EXEC InsertAssetType CD
-EXEC InsertAssets 'Book 1', 'A book about books', 1, 15.99, 0
-EXEC InsertAssets 'Book 2', 'A book about books about books', 1, 12.99, 0
-EXEC InsertAssets 'Book 3', 'A book about books about books about books', 1, 10.99, 1
-EXEC InsertAssets 'DVD 1', 'A DVD about DVDs', 2, 15.90, 0
-EXEC InsertAssets 'DVD 2', 'A DVD about DVDs about DVDs', 2, 12.90, 0
-EXEC InsertAssets 'DVD 3', 'A DVD about DVDs about DVDs about DVDs', 2, 10.90, 1
-EXEC InsertAssets 'CD 1', 'A CD about CDs', 3, 16.99, 0
-EXEC InsertAssets 'CD 2', 'A CD about CDs about CDs', 3, 13.99, 0
-EXEC InsertAssets 'CD 3', 'A CD about CDs about CDs about CDs', 3, 11.99, 0
-EXEC InsertAssets 'CD 4', 'A normal CD', 3, 3.99, 0
-*/
+EXEC InserInsertAssetType 'Magazine';
+EXEC Assets @Asset='Playboy 12/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Playboy 11/2011', @AssetDescription= 'Magzine for Men' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='Venom1', @AssetDescription= 'Spiderman VS Venom' , @AssetTypeKey=1, @ReplacementCost=24.99, @Restricted=0
+EXEC Assets @Asset='GQ 8/2016', @AssetDescription= 'Fashion Magzine For Menn' , @AssetTypeKey=3, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Pitch Perfect1', @AssetDescription= 'Dance, Comedy, Anna Kendrick' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=0
+EXEC Assets @Asset='Magic Mike', @AssetDescription= 'Story of Male Strippers' , @AssetTypeKey=3, @ReplacementCost=9.99, @Restricted=1
+EXEC Assets @Asset='La La Land', @AssetDescription= 'What happens in LA...' , @AssetTypeKey=1, @ReplacementCost=12.99, @Restricted=0
+EXEC Assets @Asset='Zootopia', @AssetDescription= 'A bunny as a cop in the animal world' , @AssetTypeKey=1, @ReplacementCost=10.99, @Restricted=0
+EXEC Assets @Asset='A Brife History Of Time', @AssetDescription= 'A brife introduction of quantum physics' , @AssetTypeKey=2, @ReplacementCost=15.99, @Restricted=0
+EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' , @AssetTypeKey=1, @ReplacementCost=9.99, @Restricted=1
 
 
 --End Logan's Code
