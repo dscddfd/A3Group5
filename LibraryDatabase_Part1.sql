@@ -1,5 +1,6 @@
 
 
+
 -- TRIGGERS (IF TABLE IS DROPPED, THEN TRIGGERS MUST BE CREATED AGAIN)
 -- 1) Create a trigger that verifies that only adult card holders check out restricted content.  Assume that I will try to work around your stored procedure for checking out material and try to directly insert a record into the AssetLoans table.
 
@@ -256,6 +257,7 @@ BEGIN
 					PRINT 'CANNOT check out asset.  Reasons could be: asset not available, restricted asset, or checkout limited reached.'
 				END
 
+
 			DELETE FROM #TempInsertedTable WHERE AssetKey = @thisAssetKey;
 		END
 
@@ -363,20 +365,26 @@ CREATE OR ALTER FUNCTION LibraryProject.AllInCost
 ( @AssetKey INT)
 RETURNS MONEY
 	BEGIN
-		DECLARE @AllInCost INT
+		DECLARE @AllInCost MONEY
 		SELECT @AllInCost = A.ReplacementCost
-		FROM LibraryProject.Asset A
+		FROM LibraryProject.Assets A
 		WHERE A.AssetKey = @AssetKey
 		DECLARE @AssetTypeKey INT
 		SELECT @AssetTypeKey = A.AssetTypeKey
-		FROM LibraryProject.Asset A
+		FROM LibraryProject.Assets A
 		WHERE A.AssetKey = @AssetKey
 		IF (@AssetTypeKey = 1)
+		Begin
 			SET @AllInCost = @AllInCost + .99;
+		END
 		ELSE IF (@AssetTypeKey = 2)
+		Begin
 			SET @AllInCost = @AllInCost + 1.99;
+		END
 		ELSE IF (@AssetTypeKey = 3)
+		BEGIN
 			SET @AllInCost = @AllInCost + 1.49;
+		END
 	RETURN @AllInCost
 	END
 ;
@@ -471,3 +479,77 @@ EXEC InsertAssets 'CD 4', 'A normal CD', 3, 3.99, 0
 
 
 --End Logan's Code
+
+
+
+
+
+
+
+-- Check in the assets
+-- when user checks in asset (insert into assetloan table), calculate the return date - (loandate + 21 days).  Put calculated days into Logan's day-fees function calculator.  Update fees table if function returns a value greater than 1.
+-- If the asset is lost, use Logan's replacement function to calculate cost for asset
+
+CREATE OR ALTER PROC CheckInAsset
+(@thisAssetLoanKey int, @returnedOn date, @lostOn date)
+AS
+BEGIN
+		DECLARE @userKey int;
+		DECLARE @loanedOn date;
+		DECLARE @assetKey int;
+		SET @loanedOn = (SELECT LoanedOn FROM [LibraryProject].AssetLoans WHERE AssetLoanKey = @thisAssetLoanKey);
+		SET @userKey = (SELECT UserKey FROM [LibraryProject].AssetLoans WHERE AssetLoanKey = @thisAssetLoanKey);
+		SET @assetKey = (SELECT AssetKey FROM [LibraryProject].AssetLoans WHERE AssetLoanKey = @thisAssetLoanKey);
+
+		UPDATE 
+			[LibraryProject].AssetLoans 
+		SET 
+			ReturnedOn = @returnedOn, 
+			LostOn = @lostOn
+		WHERE 
+			AssetLoanKey = @thisAssetLoanKey;
+
+
+	IF @returnedOn IS NOT NULL  -- asset not lost, so calculate any fees by returnedOn - (loanedOn+21)
+		BEGIN			
+			
+			DECLARE @dayDifference int;
+			DECLARE @returnedFees money;		
+
+			SET @dayDifference = DATEDIFF(dd, DATEADD(dd, 21, @loanedOn), @returnedOn);
+			SET @returnedFees = [LibraryProject].FlatFee(@dayDifference);
+
+			IF @returnedFees > 0 
+				BEGIN
+					-- insert into fees table
+					INSERT INTO [LibraryProject].Fees (Amount, UserKey) VALUES (@returnedFees, @userKey);
+				END
+		END
+	ELSE IF @lostOn IS NOT NULL
+		BEGIN
+			-- item is lost, so call function to get replacement cost
+			DECLARE @replacementCost money;
+
+			SET @replacementCost = [LibraryProject].AllInCost(@assetKey);
+
+			INSERT INTO [LibraryProject].Fees (Amount, UserKey) VALUES (@replacementCost, @userKey);
+
+		END
+
+	
+END
+
+
+
+
+/*
+
+-- TEST THE CHECKIN PROCEDURE
+
+SELECT * FROM [LibraryProject].AssetLoans;
+
+EXECUTE CheckInAsset @thisAssetLoanKey = 6, @returnedOn = NULL, @lostOn = '11/01/2018';
+
+SELECT * FROM [LibraryProject].Fees
+*/
+
