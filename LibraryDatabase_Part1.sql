@@ -3,7 +3,7 @@
 -- TRIGGERS (IF TABLE IS DROPPED, THEN TRIGGERS MUST BE CREATED AGAIN)
 -- 1) Create a trigger that verifies that only adult card holders check out restricted content.  Assume that I will try to work around your stored procedure for checking out material and try to directly insert a record into the AssetLoans table.
 
---	2) Create a trigger that verifies that the limit rules on the number of check outs is adhered to (see rules below).
+-- 2) Create a trigger that verifies that the limit rules on the number of check outs is adhered to (see rules below).
 
 -- RULES ON CHECKOUT:
 -- •	Restricted items can only be checked out by members with an adult card
@@ -208,7 +208,6 @@ END
 GO
 
 
---DROP TRIGGER [LibraryProject].tr_CheckoutAssets;
 
 CREATE OR ALTER TRIGGER [LibraryProject].tr_CheckoutAssets
 ON [LibraryProject].AssetLoans
