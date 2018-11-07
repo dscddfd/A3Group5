@@ -279,6 +279,18 @@ VALUES
 (@Asset, @AssetDescription , @AssetTypeKey, @ReplacementCost, @Restricted)
 END;
 
+--assets lost
+CREATE PROCEDURE ALost @Name varchar(255)
+AS
+BEGIN
+UPDATE LibraryProject.Assets
+SET DeactivatedOn=GETDATE()
+WHERE Asset=@Name
+END
+
+EXEC ALost @Name='Mistborn'
+
+
 --new users and cards
 CREATE PROCEDURE UsersInsert @LastName varchar(40), @FirstName varchar(40), @Email varchar(40), @Address1 varchar(40), @Address2 varchar(40), @City varchar(40), @StateAbbreviation varchar(40), @Birthdate date, @ResponsibleUserKey int
 AS
@@ -293,12 +305,89 @@ EXEC UsersInsert @LastName='Ashton', @FirstName='Wood', @Email='Ashwood@yahoo.co
 EXEC UsersInsert @LastName='Kris', @FirstName='Wood', @Email='Kwood@yahoo.com', @Address1='1100 West 2290 North', @Address2=NULL, @City='Layton', @StateAbbreviation='UT', @Birthdate='11/12/2011', @ResponsibleUserKey=1
 
 
+--cards
+CREATE PROCEDURE CardsIn @CardNo varchar(255), @UKey int, @CType int
+AS
+BEGIN
 INSERT LibraryProject.Cards (CardNumber, UserKey, CardTypeKey)
-VALUES
-	('T2221-422-3181', 7, 1),
-	('T1241-233-2934', 8, 2),
-	('C1266-553-9901', 9, 3)
-	
+VALUES( @CardNo , @UKey , @CType)
+END
+
+EXEC CardsIn @CardNo='T2221-422-3181', @UKey=7, @CType=1
+EXEC CardsIn @CardNo='T1241-233-2934', @UKey=8, @CType=2
+EXEC CardsIn @CardNo='C1266-553-9901', @UKey=9, @CType=3
+
+--card lost
+CREATE PROCEDURE CLost @FirstName varchar(30), @LastName varchar(30)
+AS
+BEGIN 
+UPDATE LibraryProject.Cards
+SET DeactivatedOn=GETDATE()
+WHERE UserKey IN(
+SELECT UserKey FROM LibraryProject.Users
+WHERE FirstName=@FirstName AND LastName=@LastName)
+END
+
+EXEC CLost @FirstName='Tyler', @LastName='Durden';
+EXEC CardsIn @CardNo='T1326-423-4221', @UKey=5, @CType=1
+
+--fees
+CREATE PROCEDURE Pfees @UKey int, @amount money
+AS
+BEGIN
+INSERT LibraryProject.Fees(UserKey, Amount) VALUES
+(@UKey, @amount)
+END
+
+EXEC Pfees @UKey=5, @amount=9.89
+
+
+--LoansOut
+CREATE PROCEDURE LOut @UKey int, @AKey int
+AS
+BEGIN
+INSERT LibraryProject.AssetLoans(UserKey, AssetKey, LoanedOn)
+VALUES(@UKey, @AKey, GETDATE())
+END
+
+--teens try to watch magic mike
+EXEC LOut @UKey=2, @AKey=14
+
+--outstanding fee(fail)
+EXEC LOut  @UKey=5, @AKey=14
+
+--kids trying hard and failed at 6
+EXEC LOut  @UKey=3, @AKey=4
+EXEC LOut  @UKey=3, @AKey=5
+EXEC LOut  @UKey=3, @AKey=6
+
+--return assets
+CREATE PROCEDURE RAsset @AKey int, @RDate date
+AS
+BEGIN
+UPDATE LibraryProject.AssetLoans
+SET ReturnedOn=@RDate
+WHERE AssetKey=@AKey
+END
+
+EXEC RAsset @AKey=2, @RDate='10/15/2018'
+EXEC RAsset @AKey=1, @RDate='10/29/2018'
+EXEC RAsset @AKey=8, @RDate='10/19/2018'
+
+--update user
+CREATE PROCEDURE UpdateU @LName varchar(30), @FName varchar(30), @Add varchar(255), @City varchar(30), @State varchar(10)
+AS
+BEGIN
+UPDATE LibraryProject.Users
+SET Address1=@Add, City=@City, StateAbbreviation=@State
+WHERE FirstName=@FName AND LastName=@LName
+END
+
+EXEC UpdateU @LName='Soze', @FName='Keyser', @Add='4242 Not Here Way', @City='Plain City', @State='UT'
+
+--run views
+SELECT * FROM feetable
+
 
 
 /*
