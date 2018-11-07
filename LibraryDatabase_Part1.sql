@@ -515,23 +515,40 @@ SELECT * FROM [LibraryProject].Fees
 --Ryan's Code
 											
 CREATE VIEW feetable AS
-SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'Fee'
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),al.ReturnedOn)) AS 'Fee'
 FROM
 	libraryProject.AssetLoans al
 		INNER JOIN [LibraryProject].Fees f
 		ON al.userkey = f.userkey INNER JOIN LibraryProject.assets a 
 		ON a.assetkey = al.assetkey
-WHERE DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE()) > 0;
+WHERE ReturnedOn IS NOT NULL
+UNION ALL
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),al.lostOn)) AS 'Fee'
+FROM
+	libraryProject.AssetLoans al
+		INNER JOIN [LibraryProject].Fees f
+		ON al.userkey = f.userkey INNER JOIN LibraryProject.assets a 
+		ON a.assetkey = al.assetkey
+WHERE LostOn IS NOT NULL;
 
 
 CREATE VIEW vt AS
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u1.FirstName, u1.LastName) AS 'something', u.email 
+FROM 
+	LibraryProject.Users u INNER JOIN LibraryProject.Users u1
+		ON u.ResponsibleUserKey = u1.userkey INNER JOIN LibraryProject.AssetLoans al 
+		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Assets a
+		ON al.assetkey = a.assetkey INNER JOIN [LibraryProject].Fees f
+		ON u.userkey = f.userkey
+WHERE a.AssetTypeKey = 2 AND al.LostOn IS NULL AND al.ReturnedOn IS NULL
+UNION ALL
 SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
 FROM 
 	LibraryProject.Users u INNER JOIN LibraryProject.AssetLoans al 
 		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Assets a
 		ON al.assetkey = a.assetkey INNER JOIN [LibraryProject].Fees f
 		ON u.userkey = f.userkey
-WHERE a.AssetTypeKey = 2;
+WHERE a.AssetTypeKey = 2 AND al.LostOn IS NULL AND al.ReturnedOn IS NULL;
 
 /*SELECT *
 FROM feetable
@@ -539,6 +556,7 @@ SELECT *
 FROM vt
 DROP VIEW feetable;
 DROP VIEW vt;*/
+
 
 
 --End Ryan's Code											
