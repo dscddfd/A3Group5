@@ -343,24 +343,20 @@ EXEC Pfees @UKey=5, @amount=9.89
 
 
 --LoansOut
-CREATE PROCEDURE LOut @UKey int, @AKey int
+CREATE OR ALTER PROCEDURE LOut @UKey int, @AKey int
 AS
 BEGIN
-INSERT LibraryProject.AssetLoans(UserKey, AssetKey, LoanedOn)
-VALUES(@UKey, @AKey, GETDATE())
+DECLARE @HasFee int 
+SELECT @HasFee = COUNT(F.UserKey)
+FROM [LibraryProject].Fees F
+WHERE F.Paid = 0
+	AND F.UserKey = @UKey
+IF (@HasFee = 0)
+	BEGIN
+		INSERT LibraryProject.AssetLoans(UserKey, AssetKey, LoanedOn)
+		VALUES(@UKey, @AKey, GETDATE())
+	END
 END
-
---teens try to watch magic mike
-EXEC LOut @UKey=2, @AKey=14
-
---outstanding fee(fail)
-EXEC LOut  @UKey=5, @AKey=14
-
---kids trying hard and failed at 6
-EXEC LOut  @UKey=3, @AKey=4
-EXEC LOut  @UKey=3, @AKey=5
-EXEC LOut  @UKey=3, @AKey=6
-
 --return assets
 CREATE PROCEDURE RAsset @AKey int, @RDate date
 AS
