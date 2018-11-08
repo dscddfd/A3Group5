@@ -379,6 +379,19 @@ SET Address1=@Add, City=@City, StateAbbreviation=@State
 WHERE FirstName=@FName AND LastName=@LName
 END
 
+
+---teens try to watch magic mike
+EXEC LOut @UKey=2, @AKey=14
+
+--outstanding fee(fail)
+EXEC LOut  @UKey=5, @AKey=14
+
+--kids trying hard and failed at 6
+EXEC LOut  @UKey=3, @AKey=4
+EXEC LOut  @UKey=3, @AKey=5
+EXEC LOut  @UKey=3, @AKey=6
+
+--change address
 EXEC UpdateU @LName='Soze', @FName='Keyser', @Add='4242 Not Here Way', @City='Plain City', @State='UT'
 
 --run views
