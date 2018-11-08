@@ -15,6 +15,8 @@
 -- •	An asset cannot be checked out if it is already checked out
 
 
+-- THUY'S TRIGGER AND FUNCTIONS FOR TRIGGER--
+
 CREATE OR ALTER FUNCTION [LibraryProject].doesAssetExist(@thisAssetKey int)
 RETURNS INT
 AS
@@ -263,6 +265,7 @@ BEGIN
 
 END
 GO
+----- END OF THUY'S TRIGGER AND FUNCTIONS FOR TRIGGER----
 
 --no replacement cost greater than 29.99
 ALTER TABLE LibraryProject.Assets
@@ -354,7 +357,7 @@ RETURNS MONEY
 		FROM LibraryProject.Assets A
 		WHERE A.AssetKey = @AssetKey
 		IF (@AssetTypeKey = 1)
-<<<<<<< HEAD
+
 		Begin
 			SET @AllInCost = @AllInCost + .99;
 		END
@@ -366,13 +369,13 @@ RETURNS MONEY
 		BEGIN
 			SET @AllInCost = @AllInCost + 1.49;
 		END
-=======
+
 			SET @AllInCost = @AllInCost + .99; -- Books
 		ELSE IF (@AssetTypeKey = 2)
 			SET @AllInCost = @AllInCost + 1.99; -- DVDs
 		ELSE IF (@AssetTypeKey = 3)
 			SET @AllInCost = @AllInCost + 1.49; --CDs
->>>>>>> 4b3615879bc671ea8192bc9d25a50cc38c559255
+
 	RETURN @AllInCost
 	END
 ;
@@ -435,19 +438,30 @@ EXEC Assets @Asset='Titanic', @AssetDescription= 'Oscar winning romantic movie' 
 
 
 --End Logan's Code
-<<<<<<< HEAD
 
 
 
 
+-----------------------------THUY'S CHECKOUT PROCEDURE----------------------------------
+CREATE OR ALTER PROC [LibraryProject].CheckOutAsset
+(@userKey int, @assetKey int, @loanedOn date)
+AS
+BEGIN
+	INSERT INTO [LibraryProject].AssetLoans(AssetKey, UserKey, LoanedOn)  -- THIS WILL TRIGGER CHECKOUT PASS TESTS.  See trigger.
+	VALUES(@assetKey, @userKey, @loanedOn);
+END
 
+-----------------------------------END OF THUY'S CHECKOUT PROCEDURE------------------------------------
 
+-- test checkoutasset
+EXECUTE [LibraryProject].CheckOutAsset @userKey = 1, @assetKey = 3, @loanedOn = '11/7/2018';
 
+--------------------------- THUY'S CheckInAsset------------------------------
 -- Check in the assets
 -- when user checks in asset (insert into assetloan table), calculate the return date - (loandate + 21 days).  Put calculated days into Logan's day-fees function calculator.  Update fees table if function returns a value greater than 1.
 -- If the asset is lost, use Logan's replacement function to calculate cost for asset
 
-CREATE OR ALTER PROC CheckInAsset
+CREATE OR ALTER PROC [LibraryProject].CheckInAsset
 (@thisAssetLoanKey int, @returnedOn date, @lostOn date)
 AS
 BEGIN
@@ -509,9 +523,8 @@ EXECUTE CheckInAsset @thisAssetLoanKey = 6, @returnedOn = NULL, @lostOn = '11/01
 
 SELECT * FROM [LibraryProject].Fees
 */
-
-=======
-											
+--------------------------------------END OF THUY'S CHECKIN PROCEDURE-----------------------------------
+							
 --Ryan's Code
 											
 CREATE VIEW feetable AS
@@ -545,4 +558,4 @@ DROP VIEW vt;*/
 											
 											
 											
->>>>>>> 4b3615879bc671ea8192bc9d25a50cc38c559255
+
