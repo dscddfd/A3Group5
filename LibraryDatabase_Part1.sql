@@ -620,6 +620,7 @@ FROM
 		ON a.assetkey = al.assetkey
 WHERE LostOn IS NOT NULL;
 
+GO
 
 CREATE VIEW vt AS
 SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u1.FirstName, u1.LastName) AS 'something', u.email 
