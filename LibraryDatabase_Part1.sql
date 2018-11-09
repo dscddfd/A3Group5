@@ -17,6 +17,17 @@
 
 -- THUY'S TRIGGER AND FUNCTIONS FOR TRIGGER--
 
+CREATE OR ALTER FUNCTION [LibraryProject].numberOfOpenFees(@userKey int)
+RETURNS INT
+AS
+BEGIN
+	DECLARE @numOpenFees INT;
+
+	SELECT @numOpenFees = COUNT(*) FROM [LibraryProject].Fees WHERE UserKey = @userKey AND Paid = 0;
+
+	RETURN @numOpenFees
+END
+
 CREATE OR ALTER FUNCTION [LibraryProject].doesAssetExist(@thisAssetKey int)
 RETURNS INT
 AS
@@ -224,6 +235,7 @@ BEGIN
 	DECLARE @isAvailable int;
 	DECLARE @passedRestrictedTest int
 	DECLARE @passedLimitTest int;
+	DECLARE @numOfOpenFees int;
 
 	WHILE (EXISTS(SELECT AssetKey FROM #TempInsertedTable))
 		BEGIN
@@ -244,7 +256,10 @@ BEGIN
 			SET @passedLimitTest = [LibraryProject].passLimitTest(@thisUserKey);
 			PRINT 'PASSED LIMIT TEST = ' + CAST(@passedLimitTest AS varchar(5));
 
-			IF @isAvailable = 1 AND @passedRestrictedTest = 1 AND @passedLimitTest = 1
+			SET @numOfOpenFees = [LibraryProject].numberOfOpenFees(@thisUserKey);
+			PRINT 'NUMBER OF OPEN FEES = ' + CAST(@numOfOpenFees AS varchar(10));
+
+			IF @isAvailable = 1 AND @passedRestrictedTest = 1 AND @passedLimitTest = 1 AND @numOfOpenFees = 0
 				BEGIN
 					-- check out the asset.
 					
@@ -256,7 +271,7 @@ BEGIN
 				END
 			ELSE
 				BEGIN
-					PRINT 'CANNOT check out asset.  Reasons could be: asset not available, restricted asset, or checkout limited reached.'
+					PRINT 'CANNOT check out asset.  Reasons could be: asset not available, restricted asset, checkout limited reached, or user has open fees.'
 				END
 
 
@@ -472,16 +487,35 @@ BEGIN
 		SET @userKey = (SELECT UserKey FROM [LibraryProject].AssetLoans WHERE AssetLoanKey = @thisAssetLoanKey);
 		SET @assetKey = (SELECT AssetKey FROM [LibraryProject].AssetLoans WHERE AssetLoanKey = @thisAssetLoanKey);
 
-		UPDATE 
-			[LibraryProject].AssetLoans 
-		SET 
-			ReturnedOn = @returnedOn, 
-			LostOn = @lostOn
-		WHERE 
-			AssetLoanKey = @thisAssetLoanKey;
+
+		IF (@returnedOn IS NULL AND @lostOn IS NULL)
+			BEGIN
+				PRINT 'MUST HAVE A Returned or Lost date'
+			END
+		ELSE IF (@returnedOn IS NOT NULL AND @lostOn IS NOT NULL)
+			BEGIN
+				PRINT 'CANNOT HAVE BOTH Returned On and Lost Date'
+			END
+		-- invalid return and lost date when it is before the loaned on date
+		ELSE IF (@loanedOn > @returnedOn OR @loanedOn > @lostOn)
+			BEGIN
+				PRINT 'INVALID Returned or Lost date - cannot be before loan date'
+			END
+
+		ELSE
+			BEGIN
+				PRINT 'CAN BE RETURNED'
+
+				UPDATE 
+					[LibraryProject].AssetLoans 
+				SET 
+					ReturnedOn = @returnedOn, 
+					LostOn = @lostOn
+				WHERE 
+					AssetLoanKey = @thisAssetLoanKey;
 
 
-	IF @returnedOn IS NOT NULL  -- asset not lost, so calculate any fees by returnedOn - (loanedOn+21)
+		IF @returnedOn IS NOT NULL  -- asset not lost, so calculate any fees by returnedOn - (loanedOn+21)
 		BEGIN			
 			
 			DECLARE @dayDifference int;
@@ -492,12 +526,14 @@ BEGIN
 
 			IF @returnedFees > 0 
 				BEGIN
+					PRINT 'Has late fees'
 					-- insert into fees table
 					INSERT INTO [LibraryProject].Fees (Amount, UserKey) VALUES (@returnedFees, @userKey);
 				END
 		END
 	ELSE IF @lostOn IS NOT NULL
 		BEGIN
+			PRINT 'Has replacement fees'
 			-- item is lost, so call function to get replacement cost
 			DECLARE @replacementCost money;
 
@@ -507,27 +543,24 @@ BEGIN
 
 		END
 
-	
+	END
 END
 
 
-
-
+-- Test CHECKIN Procedure
 /*
-
--- TEST THE CHECKIN PROCEDURE
-
 SELECT * FROM [LibraryProject].AssetLoans;
 
-EXECUTE CheckInAsset @thisAssetLoanKey = 6, @returnedOn = NULL, @lostOn = '11/01/2018';
+EXECUTE [LibraryProject].CheckInAsset @thisAssetLoanKey = 6, @lostOn =  '10/20/2017',  @returnedOn =  '10/20/2017';
 
 SELECT * FROM [LibraryProject].Fees
 */
+
 --------------------------------------END OF THUY'S CHECKIN PROCEDURE-----------------------------------
 							
 --Ryan's Code
 											
-CREATE VIEW feetable AS
+CREATE OR ALTER VIEW [LibraryProject].feetable AS
 SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'Fee'
 FROM
 	libraryProject.AssetLoans al
@@ -537,8 +570,8 @@ FROM
 WHERE DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE()) > 0;
 
 
-CREATE VIEW vt AS
-SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u.FirstName, u.LastName) AS 'something', u.email 
+CREATE OR ALTER VIEW [LibraryProject].vt AS
+SELECT a.asset, LibraryProject.FlatFee(DATEDIFF(DAY,DATEADD(DAY,21,al.LoanedOn),GETDATE())) AS 'FEE BUCKET', CONCAT(u.FirstName, ' ', u.LastName) AS Name, u.email 
 FROM 
 	LibraryProject.Users u INNER JOIN LibraryProject.AssetLoans al 
 		ON u.userkey = al.userkey  INNER JOIN [LibraryProject].Assets a
@@ -546,13 +579,14 @@ FROM
 		ON u.userkey = f.userkey
 WHERE a.AssetTypeKey = 2;
 
-/*SELECT *
-FROM feetable
+/*
 SELECT *
-FROM vt
-DROP VIEW feetable;
-DROP VIEW vt;*/
-
+FROM [LibraryProject].feetable
+SELECT *
+FROM [LibraryProject].vt
+DROP VIEW [LibraryProject].feetable;
+DROP VIEW [LibraryProject].vt;
+*/
 
 --End Ryan's Code											
 											
